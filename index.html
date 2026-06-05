@@ -261,17 +261,37 @@
         var endBtn = document.getElementById('rplyEndBtn');
         if (endBtn) endBtn.textContent = '🔚 End';
         var allMsgs = typeof Storage !== 'undefined' ? Storage.getMessages(sid) : [];
-        for (var i = 0; i < allMsgs.length; i++) {
-          var m = allMsgs[i];
-          var d = document.createElement('div');
-          d.className = 'msg ' + (m.role === 'user' ? 'user' : 'bot');
-          var ts = new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          var roleIcon = m.role === 'user' ? '👤' : '💬';
-          var displayText = m.role === 'user' ? '<strong>' + (s ? s.name : 'User') + '</strong><br>' + m.text : m.text;
-          d.innerHTML = '<div>' + roleIcon + ' ' + displayText + '</div><div class="mt">' + ts + '</div>';
-          if (msgs) msgs.appendChild(d);
-        }
-        if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        (async function() {
+          for (var i = 0; i < allMsgs.length; i++) {
+            var m = allMsgs[i];
+            var d = document.createElement('div');
+            d.className = 'msg ' + (m.role === 'user' ? 'user' : 'bot');
+            var ts = new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            var roleIcon = m.role === 'user' ? '👤' : '💬';
+            var displayText;
+            if (m.role === 'user') {
+              var userName = s ? s.name : 'User';
+              var detectedLang = typeof detectLang === 'function' ? detectLang(m.text) : 'unknown';
+              if (detectedLang !== 'unknown') {
+                var targetLang = detectedLang === 'ar' ? 'en' : 'ar';
+                var tr = typeof translateText === 'function' ? await translateText(m.text, 'auto', targetLang) : null;
+                var translatedText = tr && tr.success ? tr.translated : null;
+                if (translatedText && translatedText !== m.text) {
+                  displayText = '<strong>' + userName + '</strong><br>' + m.text + '<br><span style="font-size:0.75rem;opacity:0.6">🌐 ' + translatedText + '</span>';
+                } else {
+                  displayText = '<strong>' + userName + '</strong><br>' + m.text;
+                }
+              } else {
+                displayText = '<strong>' + userName + '</strong><br>' + m.text;
+              }
+            } else {
+              displayText = m.text;
+            }
+            d.innerHTML = '<div>' + roleIcon + ' ' + displayText + '</div><div class="mt">' + ts + '</div>';
+            if (msgs) msgs.appendChild(d);
+          }
+          if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        })();
 
         document.getElementById('rplyEndBtn').onclick = async function() {
           if (typeof Storage !== 'undefined') {
