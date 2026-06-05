@@ -389,10 +389,6 @@ async function handleMessage(val) {
   if (sendBtn) sendBtn.disabled = true;
   input.dispatchEvent(new Event('input'));
 
-  const adminLang = currentLang === 'ar' ? 'en' : 'ar';
-  const p = await translateText(val, 'auto', adminLang);
-  await sendToTelegram(displayName, chatState.sid, p.translated, currentLang);
-
   input.focus();
 }
 
