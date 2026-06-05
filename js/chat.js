@@ -4,7 +4,9 @@ const STORAGE_PREFIX = {
   R: id => 'cr7_r_' + id,
   U: 'cr7_lang',
   A: 'cr7_active',
-  N: 'cr7_name'
+  N: 'cr7_name',
+  AO: id => 'cr7_ao_' + id,
+  AT: 'cr7_at'
 };
 
 const Storage = {
@@ -14,6 +16,8 @@ const Storage = {
   getMessages(id) { try { const d = localStorage.getItem(STORAGE_PREFIX.M(id)); return d ? JSON.parse(d) : []; } catch (e) { return []; } },
   saveReply(id, r) { try { localStorage.setItem(STORAGE_PREFIX.R(id), JSON.stringify(r)); } catch (e) {} },
   getReply(id) { try { const d = localStorage.getItem(STORAGE_PREFIX.R(id)); return d ? JSON.parse(d) : null; } catch (e) { return null; } },
+  setAdminOnline(id, online) { try { if (online) localStorage.setItem(STORAGE_PREFIX.AO(id), Date.now()); else localStorage.removeItem(STORAGE_PREFIX.AO(id)); } catch (e) {} },
+  isAdminOnline(id) { try { const v = localStorage.getItem(STORAGE_PREFIX.AO(id)); if (!v) return false; return (Date.now() - Number(v)) < 20000; } catch (e) { return false; } },
   clearSession(id) {
     localStorage.removeItem(STORAGE_PREFIX.S(id));
     localStorage.removeItem(STORAGE_PREFIX.M(id));
@@ -60,11 +64,16 @@ function detectLang(txt) {
 }
 
 async function translateText(txt, from, to) {
-  if (from === to || from === 'unknown') return { translated: txt, success: false };
+  if (from === 'unknown' || !txt.trim()) return { translated: txt, success: false };
   try {
     const r = await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=' + from + '&tl=' + to + '&dt=t&q=' + encodeURIComponent(txt));
     const d = await r.json();
-    return { translated: d[0].map(function(i) { return i[0]; }).filter(Boolean).join(''), success: true };
+    const translated = d[0].map(function(i) { return i[0]; }).filter(Boolean).join('');
+    if (translated === txt && from !== to) {
+      console.warn('⚠️ Translation returned same text (source=' + from + ', target=' + to + ')');
+      return { translated: txt, success: false };
+    }
+    return { translated: translated, success: true };
   } catch (e) {
     return { translated: txt, success: false };
   }
@@ -335,6 +344,7 @@ async function handleName(val) {
   await sendToTelegram(chatState.name, chatState.sid, currentLang === 'ar' ? 'بدأ محادثة جديدة' : 'Started a new chat', currentLang === 'ar' ? 'ar' : 'en');
 
   chatState.step = 'chatting';
+  updateAdminStatus();
   startPolling();
 }
 
@@ -379,8 +389,10 @@ async function handleMessage(val) {
   if (sendBtn) sendBtn.disabled = true;
   input.dispatchEvent(new Event('input'));
 
-  const p = await translateText(val, currentLang === 'ar' ? 'ar' : 'en', currentLang === 'ar' ? 'en' : 'ar');
-  await sendToTelegram(displayName, chatState.sid, p.translated, currentLang === 'ar' ? 'ar' : 'en');
+  const tgLang = currentLang === 'ar' ? 'en' : 'ar';
+  const p = await translateText(val, 'auto', tgLang);
+  if (!p.success) console.warn('⚠️ Translation failed, sending original text to Telegram');
+  await sendToTelegram(displayName, chatState.sid, p.translated, currentLang);
 
   input.focus();
 }
@@ -418,19 +430,49 @@ function showEndChatConfirm() {
   };
 }
 
+function updateAdminStatus() {
+  var statusEl = document.querySelector('.chat-header-status');
+  if (!statusEl || !chatState.sid) return;
+  var dot = statusEl.querySelector('.status-dot');
+  var text = statusEl.querySelector('span:last-child');
+  var online = Storage.isAdminOnline(chatState.sid);
+  if (dot) dot.style.background = online ? '#00e676' : '#ff5252';
+  if (text) text.textContent = online ? t('on') : t('off');
+}
+
 function startPolling() {
   stopPolling();
   chatState.poll = setInterval(async function() {
     if (!chatState.sid) return;
+    updateAdminStatus();
     const r = Storage.getReply(chatState.sid);
     if (r && !r.delivered) {
       let txt = r.text;
-      if (currentLang === 'ar') {
-        const tr = await translateText(txt, 'en', 'ar');
-        txt = tr.translated;
+      const userLang = currentLang === 'ar' ? 'ar' : 'en';
+      const tr = await translateText(txt, 'auto', userLang);
+      if (!tr.success) console.warn('⚠️ Admin reply translation failed, showing original');
+
+      if (r.isEnd) {
+        addMsg('<strong>' + tr.translated + '</strong>', 'support');
+        saveMsg('support', tr.translated);
+        r.delivered = true;
+        Storage.saveReply(chatState.sid, r);
+        stopPolling();
+        setTimeout(function() {
+          if (chatState.sid) Storage.clearSession(chatState.sid);
+          localStorage.removeItem(STORAGE_PREFIX.A);
+          localStorage.removeItem(STORAGE_PREFIX.N);
+          chatState.sid = null;
+          chatState.name = null;
+          clearChat();
+          closeChat();
+          showToast(t('eDone'), 'ok');
+        }, 3000);
+        return;
       }
-      addMsg('💬 ' + txt, 'support');
-      saveMsg('support', txt);
+
+      addMsg('💬 ' + tr.translated, 'support');
+      saveMsg('support', tr.translated);
       r.delivered = true;
       Storage.saveReply(chatState.sid, r);
       showToast(t('newMsg'), 'info');
