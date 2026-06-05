@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CR7 Number Bot Support</title>
-  <link rel="icon" type="image/png" href="assets/icon.png">
-  <link rel="apple-touch-icon" href="assets/icon.png">
+  <link rel="icon" type="image/png" href="asset/logo.png">
+  <link rel="apple-touch-icon" href="asset/logo.png">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/header.css">
   <link rel="stylesheet" href="css/hero.css">
@@ -60,7 +60,7 @@
     <header id="site-header">
       <div class="header-inner">
         <div class="site-brand">
-          <img src="assets/icon.png" alt="CR7 Logo" class="site-logo" onerror="this.style.display='none'">
+          <img src="asset/logo.png" alt="CR7 Logo" class="site-logo" onerror="this.style.display='none'">
           <div class="site-logo-fallback" aria-hidden="true">⚽</div>
           <div class="brand-text">
             <span class="brand-name" data-i18n="site_name">CR7 Number Bot Support</span>
@@ -238,6 +238,7 @@
         var page = document.getElementById('replyPage');
         if (!page) return;
         page.style.display = 'flex';
+        if (typeof Storage !== 'undefined' && sid) Storage.setAdminOnline(sid, true);
         var msgs = document.getElementById('rplyMsgs');
         var input = document.getElementById('rplyInput');
         if (msgs) msgs.innerHTML = '';
@@ -273,7 +274,10 @@
         if (msgs) msgs.scrollTop = msgs.scrollHeight;
 
         document.getElementById('rplyEndBtn').onclick = async function() {
-          if (typeof Storage !== 'undefined') Storage.clearSession(sid);
+          if (typeof Storage !== 'undefined') {
+            Storage.saveReply(sid, { text: '🔚 ' + (typeof t === 'function' ? t('eDone') : 'Session ended'), time: new Date().toISOString(), delivered: false, isEnd: true });
+            Storage.clearSession(sid);
+          }
           if (typeof showToast === 'function') showToast('✅ Session ended.', 'ok');
           page.style.display = 'none';
           if (typeof refreshAdminSessions === 'function') refreshAdminSessions();
@@ -299,6 +303,8 @@
 
         document.getElementById('rplyCloseBtn').onclick = function() {
           page.style.display = 'none';
+          if (typeof Storage !== 'undefined' && rplyCurrentSid) Storage.setAdminOnline(rplyCurrentSid, false);
+          rplyCurrentSid = null;
           if (typeof refreshAdminSessions === 'function') refreshAdminSessions();
         };
       }
@@ -389,7 +395,20 @@
       function handleRoute() {
         var p = new URLSearchParams(window.location.search);
         var rs = p.get('reply');
-        if (rs && rs.length >= 8) { openReply(rs); return; }
+        var end = p.get('end');
+        if (rs && rs.length >= 8) {
+          if (end === '1') {
+            if (typeof Storage !== 'undefined') {
+              Storage.saveReply(rs, { text: '🔚 Session ended', time: new Date().toISOString(), delivered: false, isEnd: true });
+              Storage.clearSession(rs);
+            }
+            var body = document.body;
+            body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;font-family:sans-serif;background:#0f0f1a;color:#e0e0e0;text-align:center;padding:20px"><div style="font-size:3rem">✅</div><h1 style="margin:0;font-size:1.5rem">Session Ended</h1><p style="opacity:0.7;max-width:400px">The chat session has been ended successfully. The user has been notified.</p><button onclick="window.location.href=window.location.pathname" style="padding:10px 24px;border-radius:8px;border:none;background:#00d4ff;color:#0f0f1a;font-weight:600;cursor:pointer;font-size:1rem">← Back to Chat</button></div>';
+            return;
+          }
+          openReply(rs);
+          return;
+        }
         if (p.get('admin') === '1') { openAdmin(); }
       }
 
@@ -401,7 +420,12 @@
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
           var replyPage = document.getElementById('replyPage');
-          if (replyPage && replyPage.style.display === 'flex') { replyPage.style.display = 'none'; return; }
+          if (replyPage && replyPage.style.display === 'flex') {
+            replyPage.style.display = 'none';
+            if (typeof Storage !== 'undefined' && rplyCurrentSid) Storage.setAdminOnline(rplyCurrentSid, false);
+            rplyCurrentSid = null;
+            return;
+          }
           var adminPanel = document.getElementById('adminPanel');
           if (adminPanel && adminPanel.style.display === 'flex') { closeAdmin(); return; }
         }
