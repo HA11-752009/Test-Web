@@ -389,6 +389,17 @@ async function handleMessage(val) {
   if (sendBtn) sendBtn.disabled = true;
   input.dispatchEvent(new Event('input'));
 
+  const adminLang = currentLang === 'ar' ? 'en' : 'ar';
+  const p = await translateText(val, 'auto', adminLang);
+  if (p.success && p.translated !== val) {
+    var sendMsg = val + '\n━━━ 🌐 ترجمة ━━━\n' + p.translated;
+    console.log('✅ Translated: "' + val + '" → "' + p.translated + '"');
+  } else {
+    var sendMsg = val;
+    console.log('ℹ️ No translation needed: "' + val + '"');
+  }
+  await sendToTelegram(displayName, chatState.sid, sendMsg, currentLang);
+
   input.focus();
 }
 
@@ -410,6 +421,8 @@ function showEndChatConfirm() {
     if (!confirmed) return;
     if (chatState.sid) {
       saveMsg('system', t('eDone'));
+      const endName = chatState.name || t('site_name');
+      await sendToTelegram(endName, chatState.sid, currentLang === 'ar' ? '🔚 أنهى المحادثة' : '🔚 Ended the chat', currentLang === 'ar' ? 'ar' : 'en');
       Storage.clearSession(chatState.sid);
     }
     localStorage.removeItem(STORAGE_PREFIX.A);
