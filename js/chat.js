@@ -389,11 +389,6 @@ async function handleMessage(val) {
   if (sendBtn) sendBtn.disabled = true;
   input.dispatchEvent(new Event('input'));
 
-  const tgLang = currentLang === 'ar' ? 'en' : 'ar';
-  const p = await translateText(val, 'auto', tgLang);
-  if (!p.success) console.warn('⚠️ Translation failed, sending original text to Telegram');
-  await sendToTelegram(displayName, chatState.sid, p.translated, currentLang);
-
   input.focus();
 }
 
@@ -415,8 +410,6 @@ function showEndChatConfirm() {
     if (!confirmed) return;
     if (chatState.sid) {
       saveMsg('system', t('eDone'));
-      const endName = chatState.name || t('site_name');
-      await sendToTelegram(endName, chatState.sid, currentLang === 'ar' ? '🔚 أنهى المحادثة' : '🔚 Ended the chat', currentLang === 'ar' ? 'ar' : 'en');
       Storage.clearSession(chatState.sid);
     }
     localStorage.removeItem(STORAGE_PREFIX.A);
