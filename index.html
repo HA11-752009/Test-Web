@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اللقطة | El Lakta - Next-Gen Streetwear</title>
+    <!-- الخطوط والأيقونات -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: #020204;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* خلفية جزيئات الفضاء */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .main-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00f3ff;
+            border-radius: 20px;
+            box-shadow: 0 0 15px #00f3ff;
+        }
+
+        /* الهيدر الزجاجي المستقبلي */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(2, 2, 4, 0.6);
+            backdrop-filter: blur(25px);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            z-index: 999;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+            letter-spacing: 1px;
+        }
+
+        .logo span {
+            color: #ff5e00;
+            text-shadow: 0 0 15px rgba(255, 94, 0, 0.6);
+        }
+
+        nav {
+            display: flex;
+            gap: 35px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #a0a0ab;
+            font-size: 18px;
+            font-weight: 700;
+            transition: .3s ease;
+        }
+
+        nav a:hover {
+            color: #00f3ff;
+            text-shadow: 0 0 10px #00f3ff;
+        }
+
+        .icons {
+            display: flex;
+            gap: 25px;
+            font-size: 22px;
+            align-items: center;
+        }
+
+        .icons i, .cart-icon-wrapper {
+            cursor: pointer;
+            transition: .3s;
+            position: relative;
+            color: #fff;
+        }
+
+        .icons i:hover, .cart-icon-wrapper:hover {
+            color: #ff5e00;
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 8px #ff5e00);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff5e00;
+            color: white;
+            font-size: 12px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            box-shadow: 0 0 10px #ff5e00;
+        }
+
+        /* واجهة الهيرو الفضائية */
+        .hero {
+            height: 100vh;
+            background: linear-gradient(rgba(2, 2, 4, 0.3), rgba(2, 2, 4, 0.85)), url("1000136746.jpg");
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border-bottom: 2px solid rgba(0, 243, 255, 0.3);
+        }
+
+        .hero h1 {
+            font-size: 85px;
+            font-weight: 900;
+            margin-bottom: 15px;
+            text-shadow: 0 0 30px rgba(0, 243, 255, 0.8);
+        }
+
+        .hero h1 span {
+            color: #ff5e00;
+            text-shadow: 0 0 30px rgba(255, 94, 0, 0.8);
+        }
+
+        .hero p {
+            font-size: 24px;
+            color: #d0d0db;
+            max-width: 600px;
+            margin: 0 auto;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        /* زرار نيون مستقبلي ينبض */
+        .glow-btn {
+            margin-top: 35px;
+            padding: 16px 50px;
+            border: 2px solid #00f3ff;
+            background: rgba(0, 243, 255, 0.05);
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: .4s ease;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 243, 255, 0.3);
+        }
+
+        .glow-btn:hover {
+            background: #00f3ff;
+            color: #020204;
+            transform: translateY(-3px);
+            box-shadow: 0 0 35px #00f3ff, 0 0 10px #fff;
+        }
+
+        /* قسم البحث */
+        .search {
+            padding: 80px 8% 40px;
+            text-align: center;
+        }
+
+        .search input {
+            width: 100%;
+            max-width: 700px;
+            padding: 20px;
+            border: 2px solid #101525;
+            outline: none;
+            border-radius: 16px;
+            background: rgba(16, 21, 37, 0.5);
+            backdrop-filter: blur(5px);
+            color: white;
+            font-size: 18px;
+            transition: 0.3s;
+        }
+
+        .search input:focus {
+            border-color: #ff5e00;
+            box-shadow: 0 0 20px rgba(255, 94, 0, 0.4);
+        }
+
+        /* المنتجات وانيميشن التحرك من الجوانب */
+        .products {
+            padding: 40px 8% 80px;
+        }
+
+        .products h2, .features h2, .contact h2 {
+            text-align: center;
+            font-size: 45px;
+            font-weight: 900;
+            margin-bottom: 50px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        /* ستايل الكارت الزجاجي */
+        .card {
+            background: rgba(16, 21, 37, 0.4);
+            border: 1px solid rgba(0, 243, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            opacity: 0;
+            transition: transform 0.4s ease, border-color 0.4s, box-shadow 0.4s;
+        }
+
+        /* أنيميشن الجوانب */
+        .slide-left {
+            animation: slideInLeft 1s forwards ease-out;
+        }
+
+        .slide-right {
+            animation: slideInRight 1s forwards ease-out;
+        }
+
+        @keyframes slideInLeft {
+            0% { opacity: 0; transform: translateX(-150px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInRight {
+            0% { opacity: 0; transform: translateX(150px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        .card:hover {
+            transform: translateY(-12px) !important;
+            border-color: #ff5e00;
+            box-shadow: 0 10px 30px rgba(255, 94, 0, 0.3);
+        }
+
+        .badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #ff5e00;
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 0 10px #ff5e00;
+            z-index: 2;
+        }
+
+        .fav-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(2, 2, 4, 0.7);
+            color: white;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.3s;
+            z-index: 2;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .fav-btn.active i {
+            color: #ff3333;
+            filter: drop-shadow(0 0 8px #ff3333);
+        }
+
+        .card img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.15);
+            transition: 0.5s;
+        }
+
+        .info {
+            padding: 25px;
+        }
+
+        .info h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .info p {
+            color: #c0c0cb;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        .price {
+            display: block;
+            margin: 20px 0;
+            font-size: 22px;
+            font-weight: 900;
+            color: #00f3ff;
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+        }
+
+        .buy {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #00f3ff;
+            background: transparent;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: .3s ease;
+        }
+
+        .buy:hover {
+            background: #ff5e00;
+            border-color: #ff5e00;
+            box-shadow: 0 0 25px #ff5e00;
+            transform: scale(1.02);
+        }
+
+        .features {
+            padding: 60px 8%;
+            background: rgba(9, 9, 15, 0.6);
+        }
+
+        /* تواصل معنا */
+        .contact {
+            padding: 90px 8%;
+            text-align: center;
+        }
+
+        .contact p {
+            font-size: 22px;
+            margin-bottom: 35px;
+            color: #b0b0b5;
+        }
+
+        /* السلة الجانبية */
+        .cart-sidebar {
+            position: fixed;
+            top: 0;
+            left: -420px;
+            width: 400px;
+            height: 100vh;
+            background: #020204;
+            border-right: 1px solid rgba(0, 243, 255, 0.3);
+            box-shadow: 10px 0 40px rgba(0,0,0,0.9);
+            z-index: 1000;
+            transition: 0.4s cubic-bezier(0.075, 0.82, 0.165, 1);
+            padding: 40px 25px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-sidebar.open {
+            left: 0;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1a1a26;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .cart-header h3 {
+            font-size: 24px;
+            font-weight: 900;
+        }
+
+        .close-cart {
+            font-size: 30px;
+            cursor: pointer;
+            color: #a0a0ab;
+            transition: 0.3s;
+        }
+
+        .close-cart:hover {
+            color: #ff3333;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #101525;
+            padding: 15px;
+            border-radius: 14px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(0, 243, 255, 0.15);
+        }
+
+        footer {
+            background: #020204;
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        footer h2 {
+            font-size: 28px;
+            color: #ff5e00;
+            font-weight: 900;
+            text-shadow: 0 0 15px rgba(255, 94, 0, 0.4);
+        }
+
+        .email-link {
+            color: #00f3ff;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        /* زرار الواتساب الجانبي */
+        .whatsapp {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            width: 65px;
+            height: 65px;
+            background: #25D366;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 32px;
+            text-decoration: none;
+            box-shadow: 0 0 25px #25D366;
+            z-index: 999;
+            transition: .3s;
+        }
+
+        #topBtn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            border: 2px solid #00f3ff;
+            background: rgba(0, 243, 255, 0.2);
+            color: white;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: none;
+            box-shadow: 0 0 20px #00f3ff;
+            z-index: 999;
+            transition: .3s;
+        }
+
+        @media(max-width:768px) {
+            .hero h1 { font-size: 48px; }
+            nav { display: none; }
+            .cart-sidebar { width: 100%; left: -100%; }
+            .card { opacity: 1 !important; transform: none !important; animation: none !important; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- جزيئات الخلفية -->
+    <canvas id="particles-js"></canvas>
+
+    <div class="main-content">
+        <header>
+            <div class="logo">الـ <span>لقطة</span></div>
+            <nav>
+                <a href="#">الرئيسية</a>
+                <a href="#products">الـ Drop الحالي</a>
+                <a href="#features">المميزات</a>
+                <a href="#contact">التواصل الرسمي</a>
+            </nav>
+            <div class="icons">
+                <i class="fa-solid fa-magnifying-glass" onclick="document.getElementById('searchInput').focus()"></i>
+                <div class="cart-icon-wrapper" id="openCartBtn">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- سلة المشتريات -->
+        <div class="cart-sidebar" id="cartSidebar">
+            <div class="cart-header">
+                <h3>قائمة الحجز 🛒</h3>
+                <span class="close-cart" id="closeCartBtn">&times;</span>
+            </div>
+            <div class="cart-items" id="cartItemsContainer"></div>
+            <div class="cart-footer">
+                <button class="buy" id="checkoutBtn" style="background: #ff5e00; border-color:#ff5e00; box-shadow: 0 0 15px #ff5e00;">احجز القطع دي أول ما تنزل</button>
+            </div>
+        </div>
+
+        <section class="hero">
+            <div>
+                <h1>الـ <span>لقطة</span></h1>
+                <p>الـ Hype ستايل مبيتكلمش كتير.. كولكشن الـ Oversized الجديد نزل يسيطر على الشارع 🔥</p>
+                <button class="glow-btn" onclick="document.getElementById('products').scrollIntoView()">شوف الـ Drop الجديد</button>
+            </div>
+        </section>
+
+        <section class="search">
+            <input type="text" id="searchInput" placeholder="اكتب الاستايل اللي في دماغك وسيب الباقي علينا...">
+        </section>
+
+        <section class="products" id="products">
+            <h2>الكولكشن الجديد جاهز للسيطرة</h2>
+            <div class="grid">
+                <!-- كارت 1 -->
+                <div class="card scroll-anim-right" data-id="1" data-name="Overdosed Neon Shield">
+                    <div class="badge">LIMITED</div>
+                    <div class="fav-btn"><i class="fa-solid fa-heart"></i></div>
+                    <img src="1000136746.jpg" alt="تيشيرت">
+                    <div class="info">
+                        <h3>Overdosed Neon Shield</h3>
+                        <p>قصة أوفر سايز مظبوطة بالمللي. طباعة ثقيلة وملمس فخم يخليك متميز في أي خروجة.</p>
+                        <span class="price">السعر قريب جداً 🔥</span>
+                        <button class="buy add-to-cart">احجز القطعة</button>
+                    </div>
+                </div>
+                <!-- كارت 2 -->
+                <div class="card scroll-anim-left" data-id="2" data-name="Cyber Ghost / Dark Mode">
+                    <div class="badge">HOT DROP</div>
+                    <div class="fav-btn"><i class="fa-solid fa-heart"></i></div>
+                    <img src="1000136746.jpg" alt="تيشيرت">
+                    <div class="info">
+                        <h3>Cyber Ghost / Dark Mode</h3>
+                        <p>اللون الأسود المعتم لعشاق الغموض والـ Streetwear الخالص. قفل التريند من الآخر.</p>
+                        <span class="price">السعر قريب جداً 🔥</span>
+                        <button class="buy add-to-cart">احجز القطعة</button>
+                    </div>
+                </div>
+                <!-- كارت 3 -->
+                <div class="card scroll-anim-right" data-id="3" data-name="Ice Matrix Off-White">
+                    <div class="badge">TRENDING</div>
+                    <div class="fav-btn"><i class="fa-solid fa-heart"></i></div>
+                    <img src="1000136746.jpg" alt="تيشيرت">
+                    <div class="info">
+                        <h3>Ice Matrix Off-White</h3>
+                        <p>الأوف وايت الرايق اللي بيعكس الـ Vibe الصح. خامة قطن تقيلة تغسل وتلبس من غير قلق.</p>
+                        <span class="price">السعر قريب جداً 🔥</span>
+                        <button class="buy add-to-cart">احجز القطعة</button>
+                    </div>
+                </div>
+                <!-- كارت 4 -->
+                <div class="card scroll-anim-left" data-id="4" data-name="Glitch Protocol Elite">
+                    <div class="badge">TOP PIECE</div>
+                    <div class="fav-btn"><i class="fa-solid fa-heart"></i></div>
+                    <img src="1000136746.jpg" alt="تيشيرت">
+                    <div class="info">
+                        <h3>Glitch Protocol Elite</h3>
+                        <p>تصميم جرافيك جليتش للمستقبل. متاح منه قطع محدودة جداً ومستحيل تشوفه مع حد تاني.</p>
+                        <span class="price">السعر قريب جداً 🔥</span>
+                        <button class="buy add-to-cart">احجز القطعة</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <h2>ثوابت البراند اللي مفيهاش كلام</h2>
+            <div class="grid">
+                <div class="card scroll-anim-right">
+                    <div class="info">
+                        <h3>🚚 شحن طيارة وسريع</h3>
+                        <p>طلبك بيوصلك أسرع مما تتخيل لحد باب البيت في أي مكان.</p>
+                    </div>
+                </div>
+                <div class="card scroll-anim-left">
+                    <div class="info">
+                        <h3>💎 خامة توب وبثقة</h3>
+                        <p>قطن مصري 100% غسيل ولبس، والطباعة مبتشققش ولا بتبهت.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="contact" id="contact">
+            <h2>قنوات الاتصال السريعة</h2>
+            <p>الخط الساخن للاستفسار والحجز المسبق: 01050680002</p>
+            <a href="https://wa.me/201050680002" class="glow-btn" style="text-decoration: none; display: inline-block; margin-top: 0;">اسأل عن ميعاد الـ Drop على واتساب</a>
+        </section>
+
+        <footer>
+            <h2>اللقطة - El Lakta</h2>
+            <p>© 2026 جميع الحقوق محفوظة | تم التصميم بأحدث تقنيات الويب</p>
+            <p>للتواصل الإداري: <a href="mailto:yzderk12@gmail.com" class="email-link">yzderk12@gmail.com</a></p>
+        </footer>
+    </div>
+
+    <a href="https://wa.me/201050680002" class="whatsapp" target="_blank">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
+    <button id="topBtn">↑</button>
+
+    <script>
+        // 1. نظام جزيئات الخلفية
+        const canvas = document.getElementById('particles-js');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particlesArray = [];
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(0, 243, 255, 0.3)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        function initParticles() {
+            for (let i = 0; i < 60; i++) particlesArray.push(new Particle());
+        }
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particlesArray.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+        initParticles(); animateParticles();
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+        // 2. أنيميشن النزول والظهور
+        const animElementsLeft = document.querySelectorAll('.scroll-anim-left');
+        const animElementsRight = document.querySelectorAll('.scroll-anim-right');
+        
+        const triggerAnimation = () => {
+            const triggerBottom = window.innerHeight * 0.85;
+            animElementsLeft.forEach(el => {
+                const top = el.getBoundingClientRect().top;
+                if(top < triggerBottom) el.classList.add('slide-left');
+            });
+            animElementsRight.forEach(el => {
+                const top = el.getBoundingClientRect().top;
+                if(top < triggerBottom) el.classList.add('slide-right');
+            });
+        };
+        window.addEventListener('scroll', triggerAnimation);
+        window.addEventListener('load', triggerAnimation);
+
+        // 3. السلة والتواصل بالرقم الجديد
+        let cart = [];
+        const whatsappNumber = "201050680002";
+
+        const cartSidebar = document.getElementById("cartSidebar");
+        const openCartBtn = document.getElementById("openCartBtn");
+        const closeCartBtn = document.getElementById("closeCartBtn");
+        const cartCount = document.getElementById("cartCount");
+        const cartItemsContainer = document.getElementById("cartItemsContainer");
+        const checkoutBtn = document.getElementById("checkoutBtn");
+        const topBtn = document.getElementById("topBtn");
+        const searchInput = document.getElementById("searchInput");
+        const cards = document.querySelectorAll(".products .card");
+
+        openCartBtn.onclick = () => cartSidebar.classList.add("open");
+        closeCartBtn.onclick = () => cartSidebar.classList.remove("open");
+
+        window.addEventListener('scroll', function () {
+            if (window.scrollY > 300) topBtn.style.display = "block";
+            else topBtn.style.display = "none";
+        });
+        topBtn.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+        searchInput.onkeyup = function () {
+            let value = this.value.toLowerCase();
+            cards.forEach(card => {
+                let title = card.querySelector("h3").innerText.toLowerCase();
+                card.style.display = title.includes(value) ? "block" : "none";
+            });
+        };
+
+        document.querySelectorAll(".fav-btn").forEach(btn => {
+            btn.onclick = function (e) { e.stopPropagation(); this.classList.toggle("active"); };
+        });
+
+        document.querySelectorAll(".add-to-cart").forEach(btn => {
+            btn.onclick = function () {
+                const card = this.closest(".card");
+                const id = card.getAttribute("data-id");
+                const name = card.getAttribute("data-name");
+
+                const existingItem = cart.find(item => item.id === id);
+                if (existingItem) existingItem.qty++;
+                else cart.push({ id, name, qty: 1 });
+                updateCart();
+                cartSidebar.classList.add("open");
+            };
+        });
+
+        function updateCart() {
+            cartItemsContainer.innerHTML = "";
+            let count = 0;
+            cart.forEach(item => {
+                count += item.qty;
+                cartItemsContainer.innerHTML += `
+                    <div class="cart-item">
+                        <div>
+                            <h4>${item.name}</h4>
+                            <span style="color:#00f3ff;">الكمية المطلوب حجزها: ${item.qty}</span>
+                        </div>
+                        <i class="fa-solid fa-trash" style="color:#ff3333; cursor:pointer;" onclick="removeFromCart('${item.id}')"></i>
+                    </div>`;
+            });
+            cartCount.innerText = count;
+        }
+
+        window.removeFromCart = function(id) {
+            cart = cart.filter(item => item.id !== id); updateCart();
+        };
+
+        checkoutBtn.onclick = function() {
+            if(cart.length === 0) { alert("قائمة الحجز لسه فاضية يا بطل! 🛒"); return; }
+            let message = "سلام عليكم، محتاج أحجز القطع دي أول ما الـ Drop ينزل والأسعار تفتح:\n\n";
+            cart.forEach((item, index) => {
+                message += `${index + 1}- ${item.name} (الكمية المطلوب حجزها: ${item.qty})\n`;
+            });
+            message += "\n👀 ياريت تبلغني أول ما السعر ينزل وتأكد معايا الحجز الكلي.";
+            window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
+        };
+    </script>
+</body>
+</html>
