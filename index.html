@@ -47,8 +47,11 @@ header button{font-size:16px;background:none;border:1px solid var(--line);color:
 .rp{position:absolute;top:2px;inset-inline-end:-30px;opacity:0;border:0;background:none;font-size:16px;cursor:pointer;color:var(--mute)}
 .m:hover .rp{opacity:1}
 .m.me .rp{inset-inline-end:auto;inset-inline-start:-30px}
-@media (hover:none){.rp{opacity:.5;font-size:14px}}
+@media (hover:none){.rp{display:none}}
 #replyBar{display:none;padding:8px 14px;background:var(--card);border-top:1px solid var(--line);font-size:17px;justify-content:space-between;gap:8px}
+#pendBar{display:none;align-items:center;padding:8px 14px;background:var(--card);border-top:1px solid var(--line);font-size:17px;justify-content:space-between;gap:8px}
+#pendBar img{height:64px;border-radius:8px}
+#pendBar button{border:0;background:none;color:var(--ink);font-size:20px;cursor:pointer}
 #replyBar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #replyBar button{border:0;background:none;color:var(--ink);font-size:18px;cursor:pointer}
 #stk{display:none;flex-direction:column;background:var(--card);border-top:1px solid var(--line);height:250px}
@@ -60,9 +63,19 @@ header button{font-size:16px;background:none;border:1px solid var(--line);color:
 #grid.big button{font-size:64px;padding:4px 8px}
 form{display:flex;gap:8px;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
 form input{flex:1;font-size:22px;padding:14px;border:1px solid var(--line);border-radius:22px;background:transparent;color:var(--ink);min-width:0}
-form button{border:0;border-radius:50%;width:52px;height:52px;background:var(--me);color:#fff;font-size:22px;cursor:pointer;flex:none}
+form button{border:0;border-radius:50%;width:48px;height:48px;background:var(--me);color:#fff;font-size:22px;cursor:pointer;flex:none}
 form button.s{background:var(--card);border:1px solid var(--line);color:var(--ink)}
 .err{color:#c0392b;font-size:16px}
+#msgs{overflow-x:hidden}
+.m{touch-action:pan-y;user-select:text}
+.m.armed{outline:3px solid var(--acc)}
+.pic{display:block;width:280px;max-width:100%;min-height:90px;border-radius:12px;background:rgba(128,128,128,.25);cursor:zoom-in}
+.pl{border:0;border-radius:22px;padding:10px 16px;font-size:20px;background:rgba(128,128,128,.25);color:inherit;cursor:pointer}
+.m audio{width:250px;max-width:100%;display:block}
+.m .cap{margin-top:6px}
+form button.rec{width:auto;border-radius:26px;padding:0 14px;background:#c0392b;font-size:18px}
+#lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;align-items:center;justify-content:center}
+#lb img{max-width:96%;max-height:96%}
 </style>
 </head>
 <body>
@@ -89,12 +102,16 @@ form button.s{background:var(--card);border:1px solid var(--line);color:var(--in
   </header>
   <div id="msgs"></div>
   <div id="replyBar"><span id="replyTxt"></span><button id="replyX">✕</button></div>
+  <div id="pendBar"><span id="pendTxt"></span><button id="pendX" type="button">✕</button></div>
   <div id="stk"><div id="tabs"></div><div id="grid"></div></div>
   <form id="f">
     <button type="button" class="s" id="stkBtn">😊</button>
+    <button type="button" class="s" id="clip">📎</button>
     <input id="txt" type="text" autocomplete="off">
-    <button>➤</button>
+    <button type="button" id="act">🎤</button>
+    <input type="file" id="file" accept="image/*,audio/*" hidden>
   </form>
+  <div id="lb"><img alt=""></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -154,7 +171,7 @@ function showCat(i){
       else{
         const t = $("txt"), p = t.selectionStart ?? t.value.length;
         t.value = t.value.slice(0,p) + e + t.value.slice(t.selectionEnd ?? p);
-        t.selectionStart = t.selectionEnd = p + e.length;
+        t.selectionStart = t.selectionEnd = p + e.length; updateAct();
       }
     };
     g.appendChild(b);
@@ -303,17 +320,23 @@ function addMsg(id, m){
   if(!mine) d.querySelector(".who").textContent = m.name;
   if(m.replyTo){
     const rt = m.replyTo;
-    d.querySelector(".q").textContent = rt.name + ": " + (rt.tr && rt.tr[me.lang] || rt.text);
+    d.querySelector(".q").textContent = rt.name + ": " + ((rt.ic ? rt.ic + " " : "") + ((rt.tr && rt.tr[me.lang]) || rt.text || "")).trim();
   }
   const body = d.querySelector(".body");
   if(m.img){ const im = document.createElement("img"); im.src = IMG(m.img); im.alt = ""; body.appendChild(im); }
   else if(m.sticker){ body.textContent = m.sticker; }
   else{
-    body.textContent = (m.tr && m.tr[me.lang]) || m.text;
-    if(m.lang !== me.lang){
-      const o = document.createElement("div");
-      o.className = "orig"; o.textContent = m.text;
-      d.appendChild(o);
+    if(m.kind) body.appendChild(mediaEl(m));
+    if(m.text){
+      const t = document.createElement("div");
+      if(m.kind) t.className = "cap";
+      t.textContent = (m.tr && m.tr[me.lang]) || m.text;
+      body.appendChild(t);
+      if(m.lang !== me.lang){
+        const o = document.createElement("div");
+        o.className = "orig"; o.textContent = m.text;
+        d.appendChild(o);
+      }
     }
   }
   const b = document.createElement("button");
@@ -321,16 +344,36 @@ function addMsg(id, m){
   b.onclick = () => startReply(id);
   d.appendChild(b);
   d.ondblclick = () => startReply(id);
+  let sx = 0, sy = 0, sw = false, armed = false;
+  const reset = () => { d.style.transition = "transform .2s"; d.style.transform = ""; d.classList.remove("armed"); };
+  d.addEventListener("touchstart", e => {
+    const t = e.touches[0]; sx = t.clientX; sy = t.clientY; sw = false; armed = false; d.style.transition = "none";
+  }, {passive:true});
+  d.addEventListener("touchmove", e => {
+    const t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if(!sw){
+      if(Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.5) sw = true;
+      else return;
+    }
+    const x = Math.max(-90, Math.min(90, dx));
+    d.style.transform = "translateX(" + x + "px)";
+    const a = Math.abs(x) >= 60;
+    if(a !== armed){ armed = a; d.classList.toggle("armed", a); if(a && navigator.vibrate) navigator.vibrate(25); }
+  }, {passive:true});
+  d.addEventListener("touchend", () => { const go = sw && armed; reset(); sw = false; if(go) startReply(id); });
+  d.addEventListener("touchcancel", () => { reset(); sw = false; });
   const box = $("msgs");
   const near = box.scrollHeight - box.scrollTop - box.clientHeight < 150;
   box.appendChild(d);
   if(near || mine) box.scrollTop = box.scrollHeight;
 }
 
+function icon(m){ return m.img ? "🖼️" : m.kind === "image" ? "📷" : m.kind === "audio" ? "🎵" : m.kind === "voice" ? "🎤" : ""; }
 function startReply(id){
   const m = cache[id]; if(!m) return;
-  replyTo = {name:m.name, text: m.sticker || (m.img ? "🖼️" : m.text), tr: m.tr || null};
-  $("replyTxt").textContent = T[me.lang].reply + " " + m.name + ": " + (m.sticker || (m.img ? "🖼️" : ((m.tr && m.tr[me.lang]) || m.text)));
+  replyTo = {name:m.name, ic: icon(m), text: m.sticker || m.text || "", tr: m.tr || null};
+  const shown = m.sticker || (((m.tr && m.tr[me.lang]) || m.text) || "");
+  $("replyTxt").textContent = T[me.lang].reply + " " + m.name + ": " + (icon(m) + " " + shown).trim();
   $("replyBar").style.display = "flex";
   $("txt").focus();
 }
@@ -351,9 +394,131 @@ async function send(text, sticker, img){
 $("f").onsubmit = e => {
   e.preventDefault();
   const t = $("txt").value.trim();
+  if(pending){ const p = pending; $("txt").value = ""; setPending(null); sendMedia(p, t); return; }
   if(!t) return;
   $("txt").value = "";
+  updateAct();
   send(t);
+};
+
+/* ===== media: photos, songs, voice ===== */
+let pending = null, rec = null, recTimer = null, recT0 = 0;
+const mediaCache = {};
+const getMedia = id => mediaCache[id] || (mediaCache[id] = db.ref("media/main/" + id).once("value").then(s => (s.val() || {}).d));
+const fmt = n => Math.floor(n/60) + ":" + String(n%60).padStart(2,"0");
+
+function mediaEl(m){
+  if(m.kind === "image"){
+    const im = document.createElement("img"); im.className = "pic"; im.alt = "";
+    getMedia(m.media).then(d => { if(d) im.src = d; });
+    im.onclick = () => { if(im.src){ $("lb").querySelector("img").src = im.src; $("lb").style.display = "flex"; } };
+    return im;
+  }
+  const b = document.createElement("button"); b.type = "button"; b.className = "pl";
+  b.textContent = m.kind === "voice" ? "▶ 🎤 " + fmt(m.dur || 0) : "▶ 🎵 " + (m.fname || "");
+  b.onclick = () => {
+    b.textContent = "⏳";
+    getMedia(m.media).then(d => {
+      const a = document.createElement("audio"); a.controls = true; a.src = d;
+      b.replaceWith(a); a.play().catch(()=>{});
+    });
+  };
+  return b;
+}
+$("lb").onclick = () => { $("lb").style.display = "none"; };
+
+function fileToData(f){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
+function readImg(f){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(f), im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 1000 / Math.max(im.naturalWidth, im.naturalHeight));
+      const w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k);
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, w, h); x.drawImage(im, 0, 0, w, h);
+      URL.revokeObjectURL(url); res(c.toDataURL("image/jpeg", 0.78));
+    };
+    im.onerror = rej; im.src = url;
+  });
+}
+
+function setPending(p){
+  pending = p;
+  const bar = $("pendBar"), tx = $("pendTxt");
+  tx.innerHTML = "";
+  if(!p){ bar.style.display = "none"; updateAct(); return; }
+  if(p.kind === "image"){ const im = document.createElement("img"); im.src = p.d; tx.appendChild(im); }
+  else tx.textContent = "🎵 " + (p.fname || "");
+  bar.style.display = "flex";
+  updateAct(); $("txt").focus();
+}
+$("pendX").onclick = () => setPending(null);
+
+async function handleFile(f){
+  if(!f) return;
+  try{
+    if(f.type.startsWith("image/")) setPending({kind:"image", d: await readImg(f)});
+    else if(f.type.startsWith("audio/")){
+      if(f.size > 5 * 1024 * 1024){ alert("الملف كبير (الحد 5 ميجا) / Archivo muy grande (máx. 5 MB)"); return; }
+      setPending({kind:"audio", d: await fileToData(f), fname: f.name});
+    }else alert("صورة أو أغنية بس / Solo imagen o audio");
+  }catch(e){ alert("تعذر فتح الملف / No se pudo abrir el archivo"); }
+}
+$("clip").onclick = () => $("file").click();
+$("file").onchange = e => { handleFile(e.target.files[0]); e.target.value = ""; };
+document.addEventListener("paste", e => {
+  if(!me) return;
+  const f = e.clipboardData && e.clipboardData.files && e.clipboardData.files[0];
+  if(f && f.type.startsWith("image/")){ e.preventDefault(); handleFile(f); }
+});
+
+async function sendMedia(p, caption){
+  $("act").textContent = "⏳";
+  const id = db.ref("media/main").push().key;
+  try{ await db.ref("media/main/" + id).set({d: p.d}); }
+  catch(e){ alert("تعذر الإرسال / No se pudo enviar"); updateAct(); return; }
+  const base = {name: me.name, lang: me.lang, ts: firebase.database.ServerValue.TIMESTAMP, kind: p.kind, media: id};
+  if(p.fname) base.fname = p.fname.slice(0, 60);
+  if(p.dur) base.dur = p.dur;
+  if(replyTo) base.replyTo = replyTo;
+  if(caption){ const r = await translateBoth(caption); base.lang = r.lang; base.text = caption; base.tr = r.tr; }
+  ref.push(base);
+  clearReply(); updateAct();
+}
+
+function updateAct(){
+  const a = $("act");
+  if(rec){ a.className = "rec"; a.textContent = "⏹ " + fmt(Math.round((Date.now() - recT0)/1000)); return; }
+  a.className = "";
+  a.textContent = ($("txt").value.trim() || pending) ? "➤" : "🎤";
+}
+$("txt").addEventListener("input", updateAct);
+
+async function toggleRec(){
+  if(rec){ rec.stop(); return; }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    const chunks = [];
+    const mt = ["audio/webm;codecs=opus","audio/mp4"].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+    const r = new MediaRecorder(stream, mt ? {mimeType: mt, audioBitsPerSecond: 32000} : {audioBitsPerSecond: 32000});
+    r.ondataavailable = e => chunks.push(e.data);
+    r.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      clearInterval(recTimer);
+      const dur = Math.round((Date.now() - recT0) / 1000);
+      rec = null; updateAct();
+      if(dur < 1) return;
+      const d = await fileToData(new Blob(chunks, {type: r.mimeType}));
+      sendMedia({kind:"voice", d, dur});
+    };
+    rec = r; recT0 = Date.now(); r.start();
+    recTimer = setInterval(() => { if(Date.now() - recT0 > 120000) r.stop(); else updateAct(); }, 500);
+    updateAct();
+  }catch(e){ alert("اسمح بالميكروفون / Permite el micrófono"); }
+}
+$("act").onclick = () => {
+  if(rec || (!$("txt").value.trim() && !pending)) toggleRec();
+  else $("f").requestSubmit();
 };
 
 $("stkBtn").onclick = () => {
