@@ -73,7 +73,7 @@ form button.s{background:var(--card);border:1px solid var(--line);color:var(--in
     <p>اكتب اسمك واختار لغتك وادخل. / Escribe tu nombre, elige tu idioma y entra.</p>
     <input id="name" type="text" placeholder="الاسم / Nombre" maxlength="20">
     <div class="langs">
-      <label><input type="radio" name="lang" value="ar" checked><span>العربية</span></label>
+      <label><input type="radio" name="lang" value="ar"><span>العربية</span></label>
       <label><input type="radio" name="lang" value="es"><span>Español 🇲🇽</span></label>
     </div>
     <button class="btn" id="go">دخول / Entrar</button>
@@ -85,7 +85,7 @@ form button.s{background:var(--card);border:1px solid var(--line);color:var(--in
 <div id="chat" class="screen">
   <header>
     <div><b id="hName"></b><small id="hRoom"></small></div>
-    <button id="out">خروج / Salir</button>
+    <div style="display:flex;gap:8px"><button id="lg"></button><button id="out">خروج / Salir</button></div>
   </header>
   <div id="msgs"></div>
   <div id="replyBar"><span id="replyTxt"></span><button id="replyX">✕</button></div>
@@ -207,11 +207,32 @@ async function translate(text, from, to){
   }
 }
 
+async function gt(text, tl){
+  const r = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl="+tl+"&dt=t&q="+encodeURIComponent(text));
+  const j = await r.json();
+  return {t: j[0].map(x=>x[0]).join(""), src: j[2]};
+}
+async function translateBoth(text){
+  try{
+    const [a, e] = await Promise.all([gt(text,"ar"), gt(text,"es")]);
+    const src = (a.src === "ar" || a.src === "es") ? a.src : me.lang;
+    const tr = {ar: a.t, es: e.t};
+    tr[src] = text;
+    return {lang: src, tr};
+  }catch(err){
+    const other = me.lang === "ar" ? "es" : "ar";
+    const tr = {}; tr[me.lang] = text;
+    tr[other] = await translate(text, me.lang, other);
+    return {lang: me.lang, tr};
+  }
+}
+
 function setUI(){
   const l = me.lang;
   document.documentElement.dir = l === "ar" ? "rtl" : "ltr";
   document.documentElement.lang = l;
   $("txt").placeholder = T[l].ph;
+  $("lg").textContent = l === "ar" ? "🌐 Español" : "🌐 العربية";
 }
 
 function enter(){
@@ -264,8 +285,9 @@ function startPresence(){
   });
 }
 
-const cache = {};
+const cache = {}; const order = [];
 function addMsg(id, m){
+  if(!cache[id]) order.push(id);
   cache[id] = m;
   const mine = m.name === me.name;
   const d = document.createElement("div");
@@ -320,10 +342,8 @@ async function send(text, sticker, img){
   if(replyTo) base.replyTo = replyTo;
   if(img){ base.img = img; ref.push(base); clearReply(); return; }
   if(sticker){ base.sticker = sticker; ref.push(base); clearReply(); return; }
-  const other = me.lang === "ar" ? "es" : "ar";
-  const tr = {}; tr[me.lang] = text;
-  tr[other] = await translate(text, me.lang, other);
-  base.text = text; base.tr = tr;
+  const r = await translateBoth(text);
+  base.lang = r.lang; base.text = text; base.tr = r.tr;
   ref.push(base);
   clearReply();
 }
@@ -343,12 +363,23 @@ $("stkBtn").onclick = () => {
 $("go").onclick = () => {
   const name = $("name").value.trim();
   const room = "main";
-  const lang = document.querySelector("input[name=lang]:checked").value;
+  const pick = document.querySelector("input[name=lang]:checked");
+  if(!pick){ $("err").textContent = "اختار لغتك / Elige tu idioma"; return; }
+  const lang = pick.value;
   if(!name){ $("err").textContent = "اكتب اسمك / Escribe tu nombre"; return; }
   if(!db){ $("err").textContent = "Firebase config missing"; return; }
   me = {name, lang, room};
   localStorage.setItem("chatme", JSON.stringify(me));
   enter();
+};
+
+$("lg").onclick = () => {
+  me.lang = me.lang === "ar" ? "es" : "ar";
+  localStorage.setItem("chatme", JSON.stringify(me));
+  setUI(); clearReply();
+  $("msgs").innerHTML = "";
+  order.forEach(id => addMsg(id, cache[id]));
+  $("msgs").scrollTop = $("msgs").scrollHeight;
 };
 
 $("out").onclick = () => {
